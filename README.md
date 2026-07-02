@@ -16,7 +16,7 @@
   <a href="https://huggingface.co/baiyu858/Bridge-WA-VLABench">
     <img src="https://img.shields.io/badge/HuggingFace-Bridge--WA--VLABench-f59e0b?logo=huggingface&logoColor=white&style=flat-square" alt="HuggingFace Bridge-WA VLABench" />
   </a>
-  <a href="assets/docs/Bridge-WA.pdf">
+  <a href="https://hcplab-sysu.github.io/BRIDGE-WA/assets/docs/Bridge-WA.pdf">
     <img src="https://img.shields.io/badge/Paper-PDF-b31b1b?logo=adobeacrobatreader&logoColor=white&style=flat-square" alt="Paper PDF" />
   </a>
 </p>
@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <a href="assets/videos/BridgeWA_release_video_v4.mp4">Watch the full demo video</a>
+  <a href="https://hcplab-sysu.github.io/BRIDGE-WA">Watch the full demo video</a>
 </p>
 
 **Bridge-WA** distills a frozen **World Teacher** into compact world-change priors for robotic action. It predicts **Future Tokens**, **Change Maps**, and **Motion-Flow Maps**, then conditions lightweight action-transformer blocks for policy learning.
