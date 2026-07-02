@@ -22,7 +22,13 @@
 </p>
 
 <p align="center">
-  <video src="assets/videos/BridgeWA_release_video_v4.mp4" controls muted loop width="100%"></video>
+  <a href="assets/videos/BridgeWA_release_video_v4.mp4">
+    <img src="assets/images/bridge-wa-demo-preview.gif" width="100%" alt="Bridge-WA demo video preview" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="assets/videos/BridgeWA_release_video_v4.mp4">Watch the full demo video</a>
 </p>
 
 **Bridge-WA** distills a frozen **World Teacher** into compact world-change priors for robotic action. It predicts **Future Tokens**, **Change Maps**, and **Motion-Flow Maps**, then conditions lightweight action-transformer blocks for policy learning.
