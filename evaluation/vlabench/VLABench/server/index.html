@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dataset Visualization</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .nav-item.selected { background: #2d5fff; color: #fff; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="flex">
+    <!-- Sidebar -->
+    <div class="w-48 bg-white h-screen shadow-lg pt-6 flex flex-col">
+      <div class="mb-3 text-lg ml-6 font-bold">🔎 DATA NAV</div>
+      <a href="#" id="nav-overview" class="nav-item px-6 py-3 block hover:bg-blue-50 selected">Overview</a>
+      <a href="#" id="nav-taskvis" class="nav-item px-6 py-3 block hover:bg-blue-50">Task Visualization</a>
+    </div>
+    <!-- Main content -->
+    <div class="flex-grow p-10">
+      <div id="content-overview"></div>
+      <div id="content-taskvis" style="display: none;"></div>
+    </div>
+  </div>
+  <script>
+    // 切换导航
+    document.getElementById('nav-overview').onclick = function(e) {
+      e.preventDefault();
+      this.classList.add('selected');
+      document.getElementById('nav-taskvis').classList.remove('selected');
+      document.getElementById('content-overview').style.display = '';
+      document.getElementById('content-taskvis').style.display = 'none';
+      loadOverview();
+    };
+    
+    document.getElementById('nav-taskvis').onclick = function(e) {
+      e.preventDefault();
+      this.classList.add('selected');
+      document.getElementById('nav-overview').classList.remove('selected');
+      document.getElementById('content-overview').style.display = 'none';
+      document.getElementById('content-taskvis').style.display = '';
+      loadTaskVis(); 
+    };
+
+    // Overview Section（文件统计）
+    async function loadOverview() {
+      try {
+        let html = `<h1 class="text-2xl font-bold mb-6">📊 HDF5 文件统计</h1>
+          <div id="primitive-section" class="mb-10">
+            <h2 class="text-xl font-semibold mb-4">🧱 Primitive Tasks</h2>
+            <div id="primitive-results" class="space-y-2">Loading...</div>
+          </div>
+          <div id="composite-section">
+            <h2 class="text-xl font-semibold mb-4">🧩 Composite Tasks</h2>
+            <div id="composite-results" class="space-y-2">Loading...</div>
+          </div>`;
+        document.getElementById('content-overview').innerHTML = html;
+        
+        const primitive = await fetch('/stats?type=primitive').then(res => res.json());
+        const composite = await fetch('/stats?type=composite').then(res => res.json());
+        
+        console.log('Primitive stats:', primitive);
+        console.log('Composite stats:', composite);
+        
+        function renderSection(data, containerId) {
+          const container = document.getElementById(containerId);
+          if (!data || Object.keys(data).length === 0) {
+            container.innerHTML = '<div class="text-gray-500">No data available</div>';
+            return;
+          }
+          
+          const maxCount = Math.max(...Object.values(data));
+          let html = '';
+          for (const [folder, count] of Object.entries(data)) {
+            const percent = maxCount === 0 ? 0 : (count / maxCount) * 100;
+            html += `
+              <div class="mb-3">
+                <div class="flex justify-between text-sm mb-1">
+                  <span>${folder}</span>
+                  <span>${count} files</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div class="bg-blue-500 h-3 rounded-full" style="width: ${percent}%;"></div>
+                </div>
+              </div>
+            `;
+          }
+          container.innerHTML = html;
+        }
+        
+        renderSection(primitive, 'primitive-results');
+        renderSection(composite, 'composite-results');
+      } catch (error) {
+        console.error('Error loading overview:', error);
+        document.getElementById('content-overview').innerHTML = `<div class="text-red-500">Error loading data: ${error.message}</div>`;
+      }
+    }
+
+    // Task Visualization Section
+    async function loadTaskVis() {
+      try {
+        let html = `<div>
+          <h2 class="text-2xl font-bold mb-4">Task Visualization</h2>
+          <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Type:</label>
+                <select id="select-type" class="border rounded px-3 py-2 w-full">
+                  <option value="primitive">Primitive</option>
+                  <option value="composite">Composite</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">Task:</label>
+                <select id="select-task" class="border rounded px-3 py-2 w-full">
+                  <option value="">Loading...</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">File:</label>
+                <select id="select-file" class="border rounded px-3 py-2 w-full">
+                  <option value="">Select task first</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">Frames:</label>
+                <input id="input-frames" type="number" value="200" min="5" max="500" 
+                      class="border rounded px-3 py-2 w-full">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">FPS:</label>
+                <input id="input-fps" type="number" value="10" min="1" max="30" 
+                      class="border rounded px-3 py-2 w-full">
+              </div>
+            </div>
+            
+            <button id="load-task-btn" class="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium">
+              🎬 Generate Videos
+            </button>
+          </div>
+          <div id="taskvis-result" class="mt-6"></div>
+        </div>`;
+        document.getElementById('content-taskvis').innerHTML = html;
+
+        // 载入任务
+        async function populateTasks() {
+          try {
+            const taskType = document.getElementById('select-type').value;
+            console.log('Loading tasks for type:', taskType);
+            
+            const response = await fetch(`/tasks?type=${taskType}`);
+            const tasks = await response.json();
+            console.log('Tasks loaded:', tasks);
+            
+            const taskSelect = document.getElementById('select-task');
+            if (!tasks || tasks.length === 0) {
+              taskSelect.innerHTML = '<option value="">No tasks available</option>';
+            } else {
+              let options = '<option value="">Select a task...</option>';
+              for(const task of tasks) {
+                options += `<option value="${task}">${task}</option>`;
+              }
+              taskSelect.innerHTML = options;
+            }
+            
+            // 重置文件选择
+            document.getElementById('select-file').innerHTML = '<option value="">Select task first</option>';
+          } catch (error) {
+            console.error('Error loading tasks:', error);
+            document.getElementById('select-task').innerHTML = '<option value="">Error loading tasks</option>';
+          }
+        }
+
+        async function populateFiles() {
+          try {
+            const taskType = document.getElementById('select-type').value;
+            const task = document.getElementById('select-task').value;
+            
+            if (!task) {
+              document.getElementById('select-file').innerHTML = '<option value="">Select task first</option>';
+              return;
+            }
+            
+            console.log('Loading files for:', taskType, task);
+            
+            const response = await fetch(`/files?type=${taskType}&task=${task}`);
+            const files = await response.json();
+            console.log('Files loaded:', files);
+            
+            const fileSelect = document.getElementById('select-file');
+            if (!files || files.length === 0) {
+              fileSelect.innerHTML = '<option value="">No files available</option>';
+            } else {
+              let options = '<option value="">Select a file...</option>';
+              for(const file of files) {
+                options += `<option value="${file}">${file}</option>`;
+              }
+              fileSelect.innerHTML = options;
+            }
+          } catch (error) {
+            console.error('Error loading files:', error);
+            document.getElementById('select-file').innerHTML = '<option value="">Error loading files</option>';
+          }
+        }
+
+        // 绑定事件监听器
+        document.getElementById('select-type').onchange = populateTasks;
+        document.getElementById('select-task').onchange = populateFiles;
+        
+        // 加载HDF5内容并生成视频
+        document.getElementById('load-task-btn').onclick = async function() {
+          try {
+            const type = document.getElementById('select-type').value;
+            const task = document.getElementById('select-task').value;
+            const file = document.getElementById('select-file').value;
+            const frames = document.getElementById('input-frames').value;
+            const fps = document.getElementById('input-fps').value;
+            
+            if (!type || !task || !file) {
+              document.getElementById('taskvis-result').innerHTML = 
+                '<div class="text-red-500 p-4 bg-red-50 rounded-lg">Please select type, task, and file</div>';
+              return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('taskvis-result').innerHTML = 
+              '<div class="text-blue-500 p-4 bg-blue-50 rounded-lg">🎬 Loading HDF5 content and generating GIF animations... This may take a moment.</div>';
+            
+            console.log('Loading HDF5 content for:', type, task, file);
+            
+            const response = await fetch(`/hdf5_content?type=${type}&task=${task}&file=${file}&n_frame=${frames}&fps=${fps}`);
+            const result = await response.json();
+            console.log('HDF5 content loaded:', result);
+            
+            if (result.error) {
+              document.getElementById('taskvis-result').innerHTML = 
+                `<div class="text-red-500 p-4 bg-red-50 rounded-lg">❌ Error: ${result.error}</div>`;
+              return;
+            }
+            
+            let resultHtml = '';
+            
+            // 显示指令
+            if (result.instruction) {
+              const instructionText = Array.isArray(result.instruction) ? 
+                result.instruction.join(' ') : result.instruction;
+              resultHtml += `
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <h3 class="font-bold text-lg mb-2">📝 Instruction:</h3>
+                  <p class="text-blue-800">${instructionText}</p>
+                </div>
+              `;
+            }
+            
+            // 显示视频
+            if (result.videos_data && result.videos_data.length > 0) {
+              resultHtml += `
+                <div class="mb-4">
+                  <h3 class="font-bold text-lg mb-3">🎬 Multi-View Videos</h3>
+                  <div class="mb-3 text-sm text-gray-600">
+                    ${result.n_views} views • ${result.total_frames} total frames • ${result.fps} FPS • Showing ${frames} frames per view
+                  </div>
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              `;
+              
+              // 为每个视角显示视频
+              result.videos_data.forEach((videoData) => {
+                const encoderInfo = result.encoder === 'ffmpeg' ? 'H.264' : (videoData.codec || 'MP4');
+                
+                resultHtml += `
+                  <div class="bg-white p-3 rounded-lg shadow-lg border">
+                    <h4 class="text-sm font-medium mb-2 text-gray-700 text-center">
+                      📹 View ${videoData.view_id + 1}
+                    </h4>
+                    <div class="text-xs text-gray-500 text-center mb-2">
+                      ${videoData.frames_count} frames • ${encoderInfo}
+                    </div>
+                    <div class="aspect-square">
+                      <video 
+                        class="w-full h-full object-cover rounded-lg border shadow-sm bg-gray-100" 
+                        controls 
+                        loop 
+                        muted
+                        preload="metadata"
+                        playsinline
+                        onloadstart="console.log('Video loading started for view ${videoData.view_id + 1}')"
+                        oncanplay="console.log('Video can play for view ${videoData.view_id + 1}')"
+                        onerror="console.error('Video error for view ${videoData.view_id + 1}', this.error)"
+                        onloadedmetadata="console.log('Video metadata loaded for view ${videoData.view_id + 1}', this.videoWidth + 'x' + this.videoHeight)">
+                        <source src="data:video/mp4;base64,${videoData.video_b64}" type="video/mp4">
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </div>
+                `;
+              });
+              
+              resultHtml += `
+                  </div>
+                </div>
+              `;
+            } else {
+              resultHtml += `
+                <div class="text-red-500 p-4 bg-red-50 rounded-lg">
+                  ❌ No videos generated or error creating videos.
+                  <br><small>Please check the console for more details.</small>
+                </div>
+              `;
+            }
+            
+            document.getElementById('taskvis-result').innerHTML = resultHtml;
+            
+          } catch (error) {
+            console.error('Error loading HDF5 content:', error);
+            document.getElementById('taskvis-result').innerHTML = 
+              `<div class="text-red-500 p-4 bg-red-50 rounded-lg">
+                ❌ Error loading content: ${error.message}
+                <br><small>Please check the console for more details.</small>
+              </div>`;
+          }
+        };
+
+        // 首次载入任务列表
+        await populateTasks();
+        
+      } catch (error) {
+        console.error('Error initializing task visualization:', error);
+        document.getElementById('content-taskvis').innerHTML = 
+          `<div class="text-red-500 p-4 bg-red-50 rounded-lg">
+            ❌ Error initializing: ${error.message}
+          </div>`;
+      }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      loadOverview(); // 默认显示概览页面
+    });
+    
+    // 如果页面已经加载完成，直接初始化
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadOverview);
+    } else {
+      loadOverview();
+    }
+  </script>
+</body>
+</html>

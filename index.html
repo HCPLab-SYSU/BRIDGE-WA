@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge-WA | Predicting Where and How the World Changes for Robotic Action</title>
+    <meta name="description" content="Bridge-WA project page with framework, banner video, real-robot demos, and simulation rollouts.">
+    <link rel="icon" type="image/png" href="assets/images/logo/bridge-wa-logo.png">
+    <link rel="apple-touch-icon" href="assets/images/logo/bridge-wa-logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --light-gray: #f5f7fa;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: var(--light-gray);
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), #1a2530);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>') no-repeat bottom right;
+            opacity: 0.3;
+            background-size: 50% auto;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.45rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.95rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-note {
+            max-width: 900px;
+            margin: 0 auto 1.6rem;
+            font-size: 1.08rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .authors {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .author {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .authors .author a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .authors .author a:hover {
+            text-decoration: underline;
+        }
+
+        .author sup {
+            font-size: 0.7rem;
+            vertical-align: super;
+            margin-left: 2px;
+        }
+
+        .author:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            text-decoration: none;
+        }
+
+        .author-notes {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .affiliations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .affiliation {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.7rem 1.2rem;
+            border-radius: 30px;
+        }
+
+        .affiliation-logo {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        .affiliation-logo img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.8rem 1.8rem;
+            background: var(--secondary);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: #2980b9;
+            text-decoration: none;
+        }
+
+        .btn i {
+            margin-right: 0.6rem;
+        }
+
+        .btn-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.6rem;
+            display: inline-block;
+            object-fit: contain;
+        }
+
+        .btn-paper {
+            background: var(--accent);
+        }
+
+        .btn-paper:hover {
+            background: #c0392b;
+        }
+
+        .hero-video {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 1rem 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-video video,
+        .feature-video {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: block;
+            background: black;
+        }
+
+        section {
+            padding: 1rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .section-title h2 {
+            font-size: 3rem;
+            color: var(--primary);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        .section-title h2:after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 4px;
+            background: var(--secondary);
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .abstract {
+            background: white;
+            border-radius: 10px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 3rem;
+        }
+
+        .abstract p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 1rem;
+        }
+
+        .abstract p:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .framework {
+            margin: 3rem 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .framework-header {
+            padding: 1.5rem;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .framework-image {
+            padding: 2rem;
+            text-align: center;
+            background: #f9f9f9;
+            font-size: 1.0rem;
+        }
+
+        .framework-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .framework-caption {
+            margin-top: 1rem;
+            text-align: left;
+            color: #666;
+            font-size: 1.02rem;
+            line-height: 1.7;
+        }
+
+        .framework-block {
+            padding: 2rem;
+            border-top: 1px solid #e5e9ef;
+            background: white;
+        }
+
+        .framework-block h3 {
+            color: var(--primary);
+            font-size: 1.65rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .framework-block img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 6px;
+            border: 1px solid #e5e9ef;
+            background: white;
+        }
+
+        .framework-block-text {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .framework-block-text p {
+            color: #444;
+            font-size: 1.04rem;
+            line-height: 1.7;
+        }
+
+        .framework-steps {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .step {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+            border-left: 4px solid var(--secondary);
+            font-size: 1.1rem;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .gallery-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin: 2rem 0 1rem;
+            color: var(--primary);
+            font-size: 28px;
+            line-height: 1.0;
+        }
+
+        .subsection-note {
+            max-width: 920px;
+            margin: 0.2rem auto 1.5rem;
+            text-align: center;
+            color: #555;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin: 1rem 0 2rem;
+        }
+
+        .video-grid.dobot-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .video-grid.phone-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .video-grid.franka-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .video-grid.sim-grid {
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        }
+
+        .video-card {
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        }
+
+        .video-card video {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            object-fit: contain;
+            background: #000;
+            display: block;
+        }
+
+        .video-card.square video {
+            aspect-ratio: 1 / 1;
+        }
+
+        .video-card.tall video {
+            aspect-ratio: 1 / 1;
+            height: auto;
+            max-height: 240px;
+            object-fit: cover;
+        }
+
+        .world-prior-explain {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 1.2rem 0 1.5rem;
+        }
+
+        .prior-card {
+            border: 1px solid #e5e9ef;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #fbfcfd;
+            text-align: left;
+        }
+
+        .prior-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+        }
+
+        .cursor-mark {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+        }
+
+        .cursor-main {
+            background: #f28c28;
+        }
+
+        .cursor-secondary {
+            background: #2f80ed;
+        }
+
+        .prior-card p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.65;
+            color: #444;
+        }
+
+        .motion-note {
+            margin: 0.2rem 0 1.4rem;
+            padding: 1rem 1.2rem;
+            border-left: 4px solid var(--secondary);
+            background: rgba(52, 152, 219, 0.08);
+            color: #334;
+            line-height: 1.7;
+            text-align: left;
+        }
+
+        .video-card .video-body {
+            padding: 12px 14px 14px;
+            background: #f9f9f9;
+            flex: 1;
+        }
+
+        .video-card .video-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .video-card .video-caption {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .video-card .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .video-card .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(26, 82, 118, 0.1);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .video-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            z-index: 2;
+        }
+
+        .condition-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            max-width: calc(100% - 78px);
+            padding: 6px 10px;
+            border-radius: 999px;
+            color: white;
+            background: rgba(44, 62, 80, 0.78);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        .vlabench-matrix {
+            display: grid;
+            grid-template-columns: 150px repeat(var(--vlabench-columns, 5), minmax(0, 1fr));
+            gap: 0.8rem;
+            margin: 1rem 0 2rem;
+            align-items: stretch;
+        }
+
+        .vlabench-corner,
+        .vlabench-column,
+        .vlabench-task {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            color: var(--primary);
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .vlabench-task {
+            justify-content: flex-start;
+            text-align: left;
+            background: #f9f9f9;
+        }
+
+        .vlabench-matrix .video-card .video-body {
+            display: none;
+        }
+
+        .status-message {
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            color: #555;
+            text-align: center;
+        }
+
+        .bibtex {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem auto 3rem;
+            max-width: 900px;
+            box-shadow: var(--shadow);
+            font-family: Consolas, "Courier New", monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            text-align: left;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 900px) {
+            .vlabench-matrix {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .vlabench-corner,
+            .vlabench-column,
+            .vlabench-task {
+                display: none;
+            }
+
+            .vlabench-matrix .video-card .video-body {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero-kicker {
+                font-size: 0.8rem;
+            }
+
+            .hero-note {
+                font-size: 0.98rem;
+            }
+
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .abstract,
+            .framework-image,
+            .framework-steps {
+                padding: 1.5rem;
+            }
+
+            .video-grid,
+            .video-grid.dobot-grid,
+            .video-grid.phone-grid,
+            .video-grid.franka-grid,
+            .video-grid.sim-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .framework-block-text,
+            .world-prior-explain {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .header-content {
+                padding: 0 1rem;
+            }
+
+            h1 {
+                font-size: 1.85rem;
+            }
+
+            .abstract,
+            .framework-image,
+            .framework-steps {
+                padding: 1.2rem;
+            }
+
+            .video-grid,
+            .video-grid.dobot-grid,
+            .video-grid.phone-grid,
+            .video-grid.franka-grid,
+            .video-grid.sim-grid,
+            .vlabench-matrix {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-bg"></div>
+        <div class="header-content">
+            <div class="hero-kicker"><i class="fas fa-robot"></i> Bridge-WA</div>
+            <h1>Bridge-WA: Predicting Where and How the World Changes for Robotic Action</h1>
+            <p class="hero-note">
+                A lightweight world-action framework that turns future-change prediction into compact priors for robust robotic manipulation.
+            </p>
+            <div class="authors">
+                <div class="author"><a href="https://scholar.google.com/citations?user=W_YDucAAAAAJ&hl=zh-CN" target="_blank">Yongjie Bai</a><sup>1,2</sup></div>
+                <div class="author"><span>Hanting Wang</span><sup>1</sup></div>
+                <div class="author"><a href="https://github.com/CCCalcifer/" target="_blank">Mingtong Dai</a><sup>2,3</sup></div>
+                <div class="author"><span>Qijun Zhong</span><sup>1,2</sup></div>
+                <div class="author"><a href="https://yangliu9208.github.io/" target="_blank">Yang Liu</a><sup>1</sup></div>
+                <div class="author"><a href="http://www.linliang.net/" target="_blank">Liang Lin</a><sup>1,2,4</sup></div>
+            </div>
+            <div class="affiliations">
+                <div class="affiliation">
+                    <div class="affiliation-logo">
+                        <img src="assets/images/logo/sysu.png" alt="Sun Yat-sen University">
+                    </div>
+                    <div><sup>1</sup>Sun Yat-sen University</div>
+                </div>
+                <div class="affiliation">
+                    <div class="affiliation-logo">
+                        <img src="assets/images/logo/pcl.png" alt="Pengcheng Laboratory">
+                    </div>
+                    <div><sup>2</sup>Pengcheng Laboratory</div>
+                </div>
+                <div class="affiliation">
+                    <div class="affiliation-logo">
+                        <img src="assets/images/logo/cas.png" alt="Chinese Academy of Sciences">
+                    </div>
+                    <div><sup>3</sup>Shenzhen Institutes of Advanced Technology, Chinese Academy of Sciences</div>
+                </div>
+                <div class="affiliation">
+                    <div class="affiliation-logo">
+                        <img src="assets/images/logo/xera.png" alt="X-Era AI Lab">
+                    </div>
+                    <div><sup>4</sup>X-Era AI Lab</div>
+                </div>
+            </div>
+            <div class="buttons">
+                <a href="assets/docs/Bridge-WA.pdf" class="btn btn-paper"><i class="fas fa-file-pdf"></i> Paper</a>
+                <a href="https://github.com/HCPLab-SYSU/BRIDGE-WA.git" class="btn" target="_blank" rel="noopener noreferrer"><i class="fas fa-code"></i> Code</a>
+                <a href="https://huggingface.co/baiyu858/Bridge-WA-VLABench" class="btn" target="_blank" rel="noopener noreferrer"><img class="btn-icon" src="assets/images/logo/huggingface_logo-noborder.svg" alt=""> Hugging Face</a>
+            </div>
+        </div>
+        <div class="hero-video">
+            <video src="assets/videos/BridgeWA_release_video_v4.mp4" autoplay muted loop playsinline webkit-playsinline controls preload="metadata"></video>
+        </div>
+    </header>
+
+    <section id="abstract">
+        <div class="section-title">
+            <h2>Abstract</h2>
+        </div>
+        <div class="abstract">
+            <p>
+                General-purpose vision-language-action models benefit from large vision-language priors, but effective manipulation also requires anticipating action-relevant scene changes. Existing world-action models often rely on large generative world models or dense future rollouts, which are expensive and spend capacity on visual details weakly coupled to control.
+            </p>
+            <p>
+                Bridge-WA distills a frozen future-change teacher into three compact priors: future tokens for intended outcomes, change maps for intervention support, and motion-flow maps for local transition direction. A BridgeWA block conditions the action transformer on these priors through multi-source attention memories and spatial-temporal biases, while the teacher model is removed at inference.
+            </p>
+            <div class="highlight">
+                By focusing action generation on where and how the scene will change, Bridge-WA suppresses nuisance appearance factors such as background, lighting, and distractors, improving task success, progress, and robustness across simulation and real-robot evaluations.
+            </div>
+        </div>
+    </section>
+
+    <section id="framework">
+        <div class="section-title">
+            <h2>Framework</h2>
+        </div>
+        <div class="framework">
+            <div class="framework-header">Compact World-Change Priors for Action Generation</div>
+            <div class="framework-image">
+                <img src="assets/images/bridge-wa-arch-1.png" alt="Bridge-WA framework">
+                <p class="framework-caption">
+                    Bridge-WA represents the action-relevant future with three compact world-change representations: future tokens for the intended outcome, change maps for where the scene should change, and motion-flow maps for how the change should move. A lightweight predictor estimates these representations from the current robot context, and BridgeWA conditions the action transformer on them for world-aware action generation. The training-time future model and offline cache are removed at deployment.
+                </p>
+            </div>
+            <div class="framework-block">
+                <h3>World Teacher Pretraining and BridgeWA Block</h3>
+                <img src="assets/images/teacher-worldbridge-block.png" alt="World teacher pretraining and BridgeWA block">
+                <div class="framework-block-text">
+                    <p>
+                        The world teacher is first pretrained as a 5B robot-conditioned future-change model on BridgeData V2 trajectories. It maps the current visual observation, language instruction, and robot state into a predictive representation of the future scene, providing supervision that is aligned with manipulation-induced change rather than generic video appearance. After this stage, the teacher is frozen and used only to construct offline caches.
+                    </p>
+                    <p>
+                        The BridgeWA block turns the cached future tokens, change maps, and future-change-flow maps into policy-readable conditioning. Future tokens provide global outcome context; change maps identify the spatial support of task-relevant intervention; and flow maps encode local look-ahead transition direction. The action transformer keeps policy-centered queries while reading these structured memories through attention, enabling world-aware action decoding without deploying the large teacher at inference time.
+                    </p>
+                </div>
+            </div>
+            <div class="framework-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <strong>Training-time world teacher.</strong> A frozen future-change model produces cached supervision targets that summarize outcome, spatial change, and local motion.
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <strong>Lightweight prior predictor.</strong> The deployable model learns to recover future tokens, change maps, and flow maps from the current robot context.
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <strong>World-aware action decoding.</strong> BridgeWA injects predicted priors into the action transformer as memory tokens and attention guidance.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="banner">
+        <div class="section-title">
+            <h2>World-Prior Visualization on Dobot Rollouts</h2>
+        </div>
+        <div class="abstract">
+            <video class="feature-video" src="assets/videos/banner/bridgewa_real_robot_banner.mp4" autoplay muted loop playsinline webkit-playsinline controls preload="metadata"></video>
+            <p>
+                The rollout highlights a real-robot execution together with the predicted future, change map, and motion-flow views used by Bridge-WA. The numbered cursors summarize the strongest localized world-prior responses, while the arrows indicate the look-ahead motion direction estimated from future-change-flow.
+            </p>
+            <div class="world-prior-explain">
+                <div class="prior-card">
+                    <div class="prior-title"><span class="cursor-mark cursor-main">1</span> Primary anchor</div>
+                    <p>
+                        The orange cursor marks the strongest task-relevant future-change region over the look-ahead horizon.
+                    </p>
+                </div>
+                <div class="prior-card">
+                    <div class="prior-title"><span class="cursor-mark cursor-secondary">2</span> Secondary anchor</div>
+                    <p>
+                        The blue cursor marks a second stable future-change region.
+                    </p>
+                </div>
+            </div>
+            <div class="motion-note">
+                In short, a cursor denotes where key change is expected to happen, and the nearby arrow denotes how that future change is expected to move. These arrows are derived from future-change-flow and serve as look-ahead motion-direction cues for the scene, robot, or manipulated object.
+            </div>
+        </div>
+    </section>
+
+    <section id="dobot">
+        <div class="section-title">
+            <h2>Dobot Evaluation Demonstration</h2>
+        </div>
+        <div id="dobot-content"></div>
+    </section>
+
+    <section id="franka">
+        <div class="section-title">
+            <h2>Franka Evaluation Demonstration</h2>
+        </div>
+        <div id="franka-content"></div>
+    </section>
+
+    <section id="simulation">
+        <div class="section-title">
+            <h2>Simulation</h2>
+        </div>
+        <div id="simulation-content"></div>
+    </section>
+
+    <section id="citation">
+        <div class="section-title">
+            <h2>Citation</h2>
+        </div>
+        <pre class="bibtex">@article{bai2026bridgewa,
+  title   = {Bridge-WA: Predicting Where and How the World Changes for Robotic Action},
+  author  = {Bai, Yongjie and Wang, Hanting and Dai, Mingtong and Zhong, Qijun and Liu, Yang and Lin, Liang},
+  year    = {2026}
+}</pre>
+    </section>
+
+    <script src="assets/data/videos.js"></script>
+    <script>
+        const data = window.BRIDGE_WA_MEDIA || { modules: [] };
+
+        function moduleById(id) {
+            return (data.modules || []).find((module) => module.id === id);
+        }
+
+        function configureVideo(video) {
+            video.muted = true;
+            video.loop = true;
+            video.autoplay = true;
+            video.playsInline = true;
+            video.setAttribute('playsinline', '');
+            video.setAttribute('webkit-playsinline', '');
+            video.preload = 'metadata';
+            video.addEventListener('loadedmetadata', () => {
+                video.play().catch(() => {});
+            }, { once: true });
+            video.play().catch(() => {});
+        }
+
+        function prettyTitle(title) {
+            return title
+                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                .replace(/\bRgb\b/g, 'RGB')
+                .replace(/\bA2B\b/g, 'A2B');
+        }
+
+        function makeVideoCard(card, options = {}) {
+            const article = document.createElement('article');
+            const classes = ['video-card'];
+            const src = card.src || '';
+            if (options.square || src.includes('/intel/') || src.includes('/vlabench_single/')) classes.push('square');
+            if (options.tall || src.includes('/phone/') || src.includes('/phone_2x/')) classes.push('tall');
+            article.className = classes.join(' ');
+
+            const video = document.createElement('video');
+            video.controls = true;
+            video.src = src;
+            configureVideo(video);
+            article.appendChild(video);
+
+            if (options.badge !== false) {
+                const badge = document.createElement('div');
+                badge.className = 'video-badge';
+                badge.textContent = 'Success';
+                article.appendChild(badge);
+            }
+
+            const overlayLabel = options.conditionLabel ? card.condition : '';
+            if (overlayLabel) {
+                const condition = document.createElement('div');
+                condition.className = 'condition-badge';
+                condition.textContent = overlayLabel;
+                article.appendChild(condition);
+            }
+
+            if (options.body === false) {
+                return article;
+            }
+
+            const body = document.createElement('div');
+            body.className = 'video-body';
+
+            const title = document.createElement('div');
+            title.className = 'video-title';
+            title.textContent = prettyTitle(card.title || 'Demo');
+            body.appendChild(title);
+
+            const caption = options.caption || '';
+            if (caption) {
+                const captionEl = document.createElement('div');
+                captionEl.className = 'video-caption';
+                captionEl.textContent = caption;
+                body.appendChild(captionEl);
+            }
+
+            if (options.tags !== false && Array.isArray(card.tags) && card.tags.length) {
+                const tagList = document.createElement('div');
+                tagList.className = 'tag-list';
+                card.tags.forEach((tagText) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag-chip';
+                    tag.textContent = tagText;
+                    tagList.appendChild(tag);
+                });
+                body.appendChild(tagList);
+            }
+
+            article.appendChild(body);
+            return article;
+        }
+
+        function makeGrid(cards, className, options = {}) {
+            const grid = document.createElement('div');
+            grid.className = `video-grid ${className || ''}`.trim();
+            cards.forEach((card) => grid.appendChild(makeVideoCard(card, options)));
+            return grid;
+        }
+
+        function addMessage(root, text) {
+            const message = document.createElement('div');
+            message.className = 'status-message';
+            message.textContent = text;
+            root.appendChild(message);
+        }
+
+        function renderDobot() {
+            const root = document.getElementById('dobot-content');
+            const module = moduleById('dobot');
+            if (!module) {
+                addMessage(root, 'Dobot videos are not available.');
+                return;
+            }
+
+            const realSense = module.videos.filter((card) => card.src.includes('/intel/'));
+            const phone = module.videos.filter((card) => card.src.includes('/phone/') || card.src.includes('/phone_2x/'));
+            root.appendChild(makeGrid(realSense, 'dobot-grid', { square: true, conditionLabel: true, tags: false, badge: false }));
+            root.appendChild(makeGrid(phone, 'phone-grid', { tall: true, conditionLabel: true, tags: false, badge: false }));
+        }
+
+        function renderFranka() {
+            const root = document.getElementById('franka-content');
+            const module = moduleById('franka');
+            if (!module) {
+                addMessage(root, 'Franka videos are not available.');
+                return;
+            }
+
+            root.appendChild(makeGrid(module.videos, 'franka-grid', { conditionLabel: true, tags: false, badge: false }));
+        }
+
+        function renderVlabenchMatrix(module) {
+            const columns = module.columns || [];
+            const tasks = [];
+            module.videos.forEach((card) => {
+                if (!tasks.includes(card.title)) tasks.push(card.title);
+            });
+
+            const matrix = document.createElement('div');
+            matrix.className = 'vlabench-matrix';
+            matrix.style.setProperty('--vlabench-columns', tasks.length || 1);
+
+            const corner = document.createElement('div');
+            corner.className = 'vlabench-corner';
+            corner.textContent = 'Variant / Task';
+            matrix.appendChild(corner);
+
+            tasks.forEach((task) => {
+                const cell = document.createElement('div');
+                cell.className = 'vlabench-column';
+                cell.textContent = task;
+                matrix.appendChild(cell);
+            });
+
+            columns.forEach((column) => {
+                const taskCell = document.createElement('div');
+                taskCell.className = 'vlabench-task';
+                taskCell.textContent = column;
+                matrix.appendChild(taskCell);
+
+                tasks.forEach((task) => {
+                    const card = module.videos.find((item) => item.title === task && item.caption === column);
+                    if (card) {
+                        matrix.appendChild(makeVideoCard(card, { square: true, badge: false }));
+                    } else {
+                        const empty = document.createElement('div');
+                        empty.className = 'video-card';
+                        matrix.appendChild(empty);
+                    }
+                });
+            });
+
+            return matrix;
+        }
+
+        function renderSimulation() {
+            const root = document.getElementById('simulation-content');
+            const vlabench = moduleById('vlabench');
+            const robotwin = moduleById('robotwin');
+
+            if (vlabench) {
+                const title = document.createElement('h3');
+                title.className = 'gallery-header';
+                title.textContent = 'VLABench Rollouts';
+                root.appendChild(title);
+
+                const note = document.createElement('p');
+                note.className = 'subsection-note';
+                note.textContent = ' ';
+                root.appendChild(note);
+                root.appendChild(renderVlabenchMatrix(vlabench));
+            }
+
+            if (robotwin) {
+                const title = document.createElement('h3');
+                title.className = 'gallery-header';
+                title.textContent = 'RoboTwin 2.0 Rollouts';
+                root.appendChild(title);
+
+                if (robotwin.summary) {
+                    const note = document.createElement('p');
+                    note.className = 'subsection-note';
+                    note.textContent = robotwin.summary;
+                    root.appendChild(note);
+                }
+                root.appendChild(makeGrid(robotwin.videos, 'sim-grid', { badge: false }));
+            }
+
+            if (!vlabench && !robotwin) {
+                addMessage(root, 'Simulation videos are not available.');
+            }
+        }
+
+        document.querySelectorAll('video').forEach(configureVideo);
+        renderDobot();
+        renderFranka();
+        renderSimulation();
+    </script>
+</body>
+</html>
