@@ -19,6 +19,9 @@
   <a href="https://hcplab-sysu.github.io/BRIDGE-WA/assets/docs/Bridge-WA.pdf">
     <img src="https://img.shields.io/badge/Paper-PDF-b31b1b?logo=adobeacrobatreader&logoColor=white&style=flat-square" alt="Paper PDF" />
   </a>
+  <a href="https://arxiv.org/pdf/2607.02195">
+    <img src="https://img.shields.io/badge/arXiv-PDF-b31b1b?logo=arxiv&logoColor=white&style=flat-square" alt="arXiv PDF" />
+  </a>
 </p>
 
 <p align="center">
