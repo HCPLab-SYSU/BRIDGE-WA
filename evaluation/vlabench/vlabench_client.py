@@ -181,7 +181,17 @@ def get_args():
             "or explicit JSON path(s)."
         ),
     )
-    parser.add_argument('--n-episode', default=10, type=int, help="The number of episodes to evaluate for a task")
+    parser.add_argument(
+        "--n-episode",
+        default=10,
+        type=int,
+        help="Number of episodes to evaluate for every task.",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip completed tasks and continue a partially saved task.",
+    )
     parser.add_argument('--visulization', action="store_true", default=True, help="Whether to save the visualized episodes")
     parser.add_argument('--no-visulization', action="store_false", dest="visulization")
     parser.add_argument('--metrics', nargs='+', default=["success_rate"], choices=["success_rate", "intention_score", "progress_score"], help="The metrics to evaluate")
@@ -245,16 +255,25 @@ def evaluate(args):
             tasks = list(episode_config.keys())
 
         assert isinstance(tasks, list)
+        if args.n_episode <= 0:
+            raise ValueError("--n-episode must be greater than zero")
+        episodes_per_task = args.n_episode
+        total_episodes = episodes_per_task * len(tasks)
+        print(
+            f"[vlabench-client] track={track_name} tasks={len(tasks)} "
+            f"episodes_per_task={episodes_per_task} total_episodes={total_episodes}"
+        )
 
         evaluator = Evaluator(
             tasks=tasks,
-            n_episodes=args.n_episode,
+            n_episodes=episodes_per_task,
             episode_config=episode_config,
             max_substeps=20,
             tolerance=1e-2,
             save_dir=save_dir,
             visulization=args.visulization,
-            metrics=args.metrics
+            metrics=args.metrics,
+            resume=args.resume,
         )
 
         policy = ClientModel(host=kwargs['host'], port=kwargs['port'])
