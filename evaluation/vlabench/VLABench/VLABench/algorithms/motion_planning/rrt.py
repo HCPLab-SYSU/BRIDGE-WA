@@ -1,11 +1,29 @@
 import numpy as np
 import open3d as o3d
-from rrt_algorithms.rrt.rrt import RRT
-from rrt_algorithms.rrt.rrt_star import RRTStar
-from rrt_algorithms.search_space.search_space import SearchSpace
-from rrt_algorithms.utilities.plotting import Plot
 from VLABench.algorithms.path_smoothing import bezier_smoothing, polynomial_smoothing
 from VLABench.algorithms.utils import remove_pcd_near_point
+
+try:
+    from rrt_algorithms.rrt.rrt import RRT
+    from rrt_algorithms.rrt.rrt_star import RRTStar
+    from rrt_algorithms.search_space.search_space import SearchSpace
+    from rrt_algorithms.utilities.plotting import Plot
+except ModuleNotFoundError as exc:
+    # Policy evaluation registers expert skills but never executes their RRT
+    # data-generation paths, so that dependency can remain optional here.
+    RRT = RRTStar = SearchSpace = Plot = None
+    _RRT_IMPORT_ERROR = exc
+else:
+    _RRT_IMPORT_ERROR = None
+
+
+def _require_rrt_algorithms():
+    if _RRT_IMPORT_ERROR is not None:
+        raise ModuleNotFoundError(
+            "Scripted expert motion planning requires an editable install of "
+            "https://github.com/motion-planning/rrt-algorithms.git"
+        ) from _RRT_IMPORT_ERROR
+
 
 SEARCH_DIMENSIONS = np.array([(-1, 1), (-1, 1), (0.8, 1.3)])
 
@@ -35,6 +53,7 @@ def rrt_motion_planning(start_pos,
         prc: probability of checking for a connection to goal
         smooth_method: str, method to smooth the path, None or one of ["bezier", "polynomial"]
     """
+    _require_rrt_algorithms()
     if isinstance(obstacle_pcd, o3d.geometry.PointCloud):
         obstacle_pcd = np.asarray(obstacle_pcd.points)
     obstacle_pcd = obstacle_pcd[obstacle_pcd[:, 2] >= z_threshold]
@@ -84,6 +103,7 @@ def rrt_star(start_pos,
         rewire_count: optional, number of nearby branches to rewire
         prc: probability of checking for a connection to goal
     """
+    _require_rrt_algorithms()
     if isinstance(obstacle_pcd, o3d.geometry.PointCloud):
         obstacle_pcd = np.asarray(obstacle_pcd.points)
     if obstacle_pcd is not None and obstacle_pcd.shape[1] != 6:
@@ -102,6 +122,7 @@ def visulize_search_path(search_space, rrt, path, obstacles, start_pos, end_pos)
         search_space: SearchSpace, search space
         rrt: RRT, rrt object
     """
+    _require_rrt_algorithms()
     plot = Plot("rrt_3d_with_random_obstacles")
     plot.plot_tree(search_space, rrt.trees)
     if path is not None:

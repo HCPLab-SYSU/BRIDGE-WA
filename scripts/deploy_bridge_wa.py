@@ -154,7 +154,12 @@ def build_app(
             proprio_raw = payload.get("proprio")
             if proprio_raw is None:
                 return JSONResponse({"error": "proprio is required."}, status_code=400)
-            proprio = torch.as_tensor(np.asarray(json_numpy.loads(proprio_raw))).unsqueeze(0)
+            # json-numpy may return a read-only view. Torch warns that mutating a
+            # tensor backed by it is undefined behavior, so give the request its
+            # own writable buffer before creating the tensor.
+            proprio = torch.as_tensor(
+                np.array(json_numpy.loads(proprio_raw), copy=True)
+            ).unsqueeze(0)
             domain_id = torch.tensor([int(payload.get("domain_id", default_domain_id))], dtype=torch.long)
 
             inputs = {k: _to_model_tensor(v, device=device, dtype=dtype) for k, v in inputs.items()}
