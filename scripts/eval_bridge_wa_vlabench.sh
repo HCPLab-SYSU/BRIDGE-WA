@@ -33,12 +33,14 @@ export PYTHONNOUSERSITE="${PYTHONNOUSERSITE:-1}"
 : "${CLIENT_PYTHON_BIN:=python}"
 
 : "${RUN_CLIENT:=1}"
+: "${PREFLIGHT_ONLY:=0}"
 : "${STRICT_BRIDGE_WA_OFFICIAL:=1}"
-: "${EVAL_TRACKS:=track_1_in_distribution track_2_cross_category track_3_common_sense track_4_semantic_instruction}"
+: "${EVAL_TRACKS:=track_1_in_distribution track_2_cross_category track_3_common_sense track_4_semantic_instruction track_6_unseen_texture}"
 : "${TRACK_SOURCE_JSON:=}"
 : "${METRICS:=success_rate intention_score progress_score}"
 : "${N_EPISODE:=10}"
-: "${VISUALIZATION:=1}"
+: "${RESUME:=0}"
+: "${SAVE_VIDEO:=${VISUALIZATION:-0}}"
 : "${WAIT_TIMEOUT_SECONDS:=300}"
 : "${STOP_SERVER_AFTER_EVAL:=0}"
 
@@ -109,7 +111,143 @@ if [[ -z "${SERVER_PYTHON_BIN}" ]]; then
   fi
 fi
 
-OFFICIAL_EVAL_TRACKS="track_1_in_distribution track_2_cross_category track_3_common_sense track_4_semantic_instruction"
+CLIENT_RUNNER=()
+if [[ -n "${VLABENCH_CONDA_ENV}" ]]; then
+  source_conda
+  CLIENT_RUNNER=(conda run --no-capture-output -n "${VLABENCH_CONDA_ENV}" "${CLIENT_PYTHON_BIN}")
+else
+  CLIENT_RUNNER=("${CLIENT_PYTHON_BIN}")
+fi
+
+if [[ ! -d "${VLABENCH_EVAL_DIR}/VLABench/VLABench" ]]; then
+  echo "[bridge_wa-vlabench-eval] missing ${VLABENCH_EVAL_DIR}/VLABench/VLABench"
+  echo "[bridge_wa-vlabench-eval] install VLABench under ${VLABENCH_EVAL_DIR} or set VLABENCH_EVAL_DIR."
+  exit 1
+fi
+
+echo "[bridge_wa-vlabench-eval] validating VLABench client environment"
+(
+  cd "${VLABENCH_EVAL_DIR}"
+  "${CLIENT_RUNNER[@]}" - <<'PY'
+import importlib
+import sys
+from pathlib import Path
+
+modules = (
+    "colorama",
+    "colorlog",
+    "cv2",
+    "dm_control",
+    "gdown",
+    "json_numpy",
+    "mediapy",
+    "mujoco",
+    "networkx",
+    "numpy",
+    "open3d",
+    "openai",
+    "PIL",
+    "requests",
+    "scipy",
+    "sklearn",
+    "tqdm",
+    "yaml",
+)
+errors = []
+for module in modules:
+    try:
+        importlib.import_module(module)
+    except BaseException as exc:
+        errors.append((module, exc))
+
+if not errors:
+    try:
+        importlib.import_module("vlabench_client")
+    except BaseException as exc:
+        errors.append(("vlabench_client", exc))
+
+asset_root = Path.cwd() / "VLABench" / "VLABench" / "assets"
+required_assets = (
+    "base/default.xml",
+    "base/camera.xml",
+    "obj/meshes/table/table.xml",
+    "robots/franka_emika_panda/panda.xml",
+    "scenes/default/empty.xml",
+)
+missing_assets = [
+    relative for relative in required_assets
+    if not (asset_root / relative).is_file()
+]
+
+if errors or missing_assets:
+    print("[vlabench-env-check] environment validation failed:", file=sys.stderr)
+    for module, exc in errors:
+        print(
+            f"  - import {module!r} failed: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+    for relative in missing_assets:
+        print(f"  - missing simulator asset: {asset_root / relative}", file=sys.stderr)
+    if errors:
+        package = Path.cwd() / "VLABench"
+        print("[vlabench-env-check] repair dependencies with:", file=sys.stderr)
+        print(
+            f'  {sys.executable} -m pip install -e "{package}[bridge-wa-eval]"',
+            file=sys.stderr,
+        )
+    if missing_assets:
+        print(
+            "[vlabench-env-check] run scripts/download_vlabench_assets.sh",
+            file=sys.stderr,
+        )
+    raise SystemExit(1)
+
+print(f"[vlabench-env-check] ok: python={sys.executable}")
+PY
+)
+
+echo "[bridge_wa-vlabench-eval] checking server port ${HOST}:${PORT}"
+if ! HOST="${HOST}" PORT="${PORT}" "${SERVER_PYTHON_BIN}" - <<'PY'
+import os
+import socket
+import sys
+
+host = os.environ["HOST"]
+port = int(os.environ["PORT"])
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    # Match Uvicorn's bind behavior: a recently stopped listener can leave
+    # connections in TIME_WAIT without making the port genuinely unavailable.
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind((host, port))
+except OSError as exc:
+    print(
+        f"[bridge_wa-vlabench-eval] port {host}:{port} is unavailable: {exc}",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+finally:
+    sock.close()
+PY
+then
+  echo "[bridge_wa-vlabench-eval] stop the existing process or choose another PORT."
+  exit 1
+fi
+
+case "${PREFLIGHT_ONLY}" in
+  1|true|TRUE|yes|YES|on|ON)
+    echo "[bridge_wa-vlabench-eval] preflight complete; PREFLIGHT_ONLY=1, not starting server."
+    exit 0
+    ;;
+  0|false|FALSE|no|NO|off|OFF|"")
+    ;;
+  *)
+    echo "[bridge_wa-vlabench-eval] unsupported PREFLIGHT_ONLY=${PREFLIGHT_ONLY} (expected: 0|1|true|false)"
+    exit 1
+    ;;
+esac
+
+OFFICIAL_EVAL_TRACKS="track_1_in_distribution track_2_cross_category track_3_common_sense track_4_semantic_instruction track_6_unseen_texture"
 OFFICIAL_METRICS="success_rate intention_score progress_score"
 OFFICIAL_N_EPISODE="10"
 if [[ "${STRICT_BRIDGE_WA_OFFICIAL}" == "1" ]]; then
@@ -161,7 +299,8 @@ nohup env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" "${SERVER_CMD[@]}" >> "
 SERVER_PID="$!"
 
 cleanup() {
-  if [[ "${STOP_SERVER_AFTER_EVAL}" != "1" ]]; then
+  STATUS="$?"
+  if [[ "${STOP_SERVER_AFTER_EVAL}" != "1" && "${STATUS}" == "0" ]]; then
     return
   fi
   if kill -0 "${SERVER_PID}" >/dev/null 2>&1; then
@@ -227,7 +366,11 @@ echo "[bridge_wa-vlabench-eval] server is ready: ${SERVER_HOST}:${SERVER_PORT}"
 
 case "${RUN_CLIENT}" in
   0|false|FALSE|no|NO|off|OFF|"")
-    echo "[bridge_wa-vlabench-eval] RUN_CLIENT=0, server left running."
+    if [[ "${STOP_SERVER_AFTER_EVAL}" == "1" ]]; then
+      echo "[bridge_wa-vlabench-eval] RUN_CLIENT=0, server health check complete; stopping server."
+    else
+      echo "[bridge_wa-vlabench-eval] RUN_CLIENT=0, server left running."
+    fi
     exit 0
     ;;
   1|true|TRUE|yes|YES|on|ON)
@@ -238,22 +381,11 @@ case "${RUN_CLIENT}" in
     ;;
 esac
 
-if [[ -n "${VLABENCH_CONDA_ENV}" ]]; then
-  source_conda
-  conda activate "${VLABENCH_CONDA_ENV}"
-fi
-
-if [[ ! -d "${VLABENCH_EVAL_DIR}/VLABench/VLABench" ]]; then
-  echo "[bridge_wa-vlabench-eval] missing ${VLABENCH_EVAL_DIR}/VLABench/VLABench"
-  echo "[bridge_wa-vlabench-eval] install VLABench under ${VLABENCH_EVAL_DIR} or set VLABENCH_EVAL_DIR."
-  exit 1
-fi
-
 read -r -a EVAL_TRACK_ARRAY <<< "${EVAL_TRACKS}"
 read -r -a METRIC_ARRAY <<< "${METRICS}"
 
 CLIENT_CMD=(
-  "${CLIENT_PYTHON_BIN}" vlabench_client.py
+  "${CLIENT_RUNNER[@]}" vlabench_client.py
   --eval-track "${EVAL_TRACK_ARRAY[@]}"
   --n-episode "${N_EPISODE}"
   --metrics "${METRIC_ARRAY[@]}"
@@ -264,14 +396,25 @@ CLIENT_CMD=(
 if [[ -n "${TRACK_SOURCE_JSON}" ]]; then
   CLIENT_CMD+=(--track-source-json "${TRACK_SOURCE_JSON}")
 fi
-case "${VISUALIZATION}" in
+case "${RESUME}" in
+  0|false|FALSE|no|NO|off|OFF|"")
+    ;;
+  1|true|TRUE|yes|YES|on|ON)
+    CLIENT_CMD+=(--resume)
+    ;;
+  *)
+    echo "[bridge_wa-vlabench-eval] unsupported RESUME=${RESUME} (expected: 0|1|true|false)"
+    exit 1
+    ;;
+esac
+case "${SAVE_VIDEO}" in
   0|false|FALSE|no|NO|off|OFF|"")
     CLIENT_CMD+=(--no-visulization)
     ;;
   1|true|TRUE|yes|YES|on|ON)
     ;;
   *)
-    echo "[bridge_wa-vlabench-eval] unsupported VISUALIZATION=${VISUALIZATION} (expected: 0|1|true|false)"
+    echo "[bridge_wa-vlabench-eval] unsupported SAVE_VIDEO=${SAVE_VIDEO} (expected: 0|1|true|false)"
     exit 1
     ;;
 esac
